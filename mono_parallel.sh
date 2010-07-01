@@ -13,7 +13,7 @@
 # TODO: Allow have 2.6 or trunk
 VERSION=2.6
 MONO_PREFIX=/opt/mono-$VERSION
-#GNOME_PREFIX=/opt/gnome-2.6
+GNOME_PREFIX=/usr
 WORKING_DIR=~/mono-src/mono-$VERSION
 # TODO: webserver/server/workstation (+mod_mono,-gnome,-mono-tools/-gnome,-mono-tools/-mod_mono)
 MODE=server
@@ -21,8 +21,12 @@ MODE=server
 DEBUG=
 #1>&2
 
-echo "MI: This script will download/checkout mono and install in a parallel environment."
+echo "MI: This script will install dependencies and checkout mono and install in a parallel environment."
 echo "MI: Report bugs to patrick@qmtech.net, firegrass on twitter, carrier pidgeon etc"
+
+sudo apt-get install build-essential automake libtool gettext mono-devel mono-1.0-devel \
+	subversion libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
+	bison flex libcairo2-dev libpango1.0-dev -y
 
 # 
 if [ $MODE = "workstation" ] && [ "$(id -u)" = "0" ]; then
@@ -56,8 +60,7 @@ done
 # create enviroment files
 cat > "mono-$VERSION-environment" <<EOF
 #!/bin/bash
-MONO_PREFIX=$MONO_PREFIX
-GNOME_PREFIX=/opt/gnome
+export MONO_GAC_PREFIX=$MONO_PREFIX:/usr
 export DYLD_LIBRARY_PATH=$MONO_PREFIX/lib:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$MONO_PREFIX/lib:$LD_LIBRARY_PATH
 export C_INCLUDE_PATH=$MONO_PREFIX/include:$GNOME_PREFIX/include
@@ -69,8 +72,7 @@ EOF
 
 cat > "mono-$VERSION" <<EOF
 #!/bin/bash
-MONO_PREFIX=$MONO_PREFIX
-GNOME_PREFIX=/opt/gnome
+export MONO_GAC_PREFIX=$MONO_PREFIX:/usr
 export DYLD_LIBRARY_PATH=$MONO_PREFIX/lib:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$MONO_PREFIX/lib:$LD_LIBRARY_PATH
 export C_INCLUDE_PATH=$MONO_PREFIX/include:$GNOME_PREFIX/include
@@ -112,3 +114,5 @@ done
 echo "Your parallel environment is installed"
 echo "To start a mono-$VERSION environment, run: source mono-$VERSION-environment"
 echo "To use mono-$VERSION to run a cli app, run: mono-$VERSION <your app> (eg mono-$VERSION mono -V)"
+
+read -p "Done." inpVar
