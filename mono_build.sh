@@ -121,6 +121,8 @@ checkout_correct_version ()
             git checkout 0.5
         elif [ $mod == "monodevelop" ]; then
             git checkout 2.4
+        elif [ $mod == "debugger" ]; then
+            git checkout mono-2-8
         fi
     elif [ $VERSION == "2.6.7" ]; then
         echo "$ECHO_PREFIX Configuring $mod for version 2.6.7"
@@ -140,6 +142,8 @@ checkout_correct_version ()
             git checkout 0.5
         elif [ $mod == "monodevelop" ]; then
             git checkout 2.4
+        elif [ $mod == "debugger" ]; then
+            git checkout mono-2-6
         fi
     fi
 }
@@ -214,6 +218,9 @@ else
                 git checkout --track origin/0.5
             elif [ $mod == "monodevelop" ]; then
                 git checkout --track origin/2.4
+            elif [ $mod == "debugger" ]; then
+                git checkout --track origin/mono-2-6
+                git checkout --track origin/mono-2-8
             fi
             
             checkout_correct_version
@@ -288,13 +295,13 @@ else
 	    	./bootstrap-2.24 --prefix=$MONO_PREFIX
 	    elif [ $mod == "llvm" ]; then
 	        ./configure --enable-optimized
-	    elif [ $mod == "mono" ]  && [ && $GIT_MODULES == "*llvm*" ]; then
+	    elif [[ $mod == "mono" && $GIT_MODULES == "*llvm*" ]]; then
 	        ./autogen.sh --prefix=$MONO_PREFIX --enable-llvm
     	else
             ./autogen.sh --prefix=$MONO_PREFIX
         fi
 
-        make || { read -p "$ECHO_PREFIX ERROR: $mod failed to compile, press enter to continue" inpVar; cd ..; }
+        make || { read -p "$ECHO_PREFIX ERROR: $mod failed to compile, press enter to continue" inpVar; cd ..; continue; }
 
         if [ $pauseflag ]; then
             read -p "Install $mod, 'x' to exit, 's' to skip, enter to continue: " inpVar
@@ -307,7 +314,7 @@ else
             echo "$ECHO_PREFIX Installing $mod"
         fi
         
-        sudo make install || { read -p "$ECHO_PREFIX ERROR: $mod failed, press enter to continue" inpVar; cd ..; }
+        sudo make install || { read -p "$ECHO_PREFIX ERROR: $mod failed, press enter to continue" inpVar; cd ..; continue; }
         
         cd ..
         

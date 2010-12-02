@@ -30,11 +30,11 @@ echo "$ECHO_PREFIX Authors: Patrick McEvoy (firegrass) patrick@qmtech.net"
 echo "$ECHO_PREFIX Contributions from Dan Quirk,⋅Stefan Forster"
 echo "$ECHO_PREFIX This is free script under GNU GPL version 3."
 
-# Supported versions 2.6, 2.6.4 or trunk
+# Supported versions 2.8 or trunk
 if [ $1 == "trunk" ]; then
 	VERSION=trunk
-elif [ $1 == "2.6" ]; then
-	VERSION=2.6
+elif [ $1 == "2.8" ]; then
+	VERSION=2.8
 else
 	echo "$ECHO_PREFIX Requries version, mono_parallel.sh version eg mono_parallel.sh trunk"
 	exit
@@ -73,7 +73,8 @@ for mod in $GIT_MODULES; do
 	if [ -d $mod ]; then
 		echo "$ECHO_PREFIX Updating $mod"
 		cd ${mod}
-		git pull -q || { echo "$ECHO_PREFIX ERROR: Updating $mod failed, you will need to manually 'git clean -df'"; exit 1; }
+		git reset --hard
+		git pull origin master -q || { echo "$ECHO_PREFIX ERROR: Updating $mod failed, you will need to manually 'git clean -df'"; exit 1; }
 		cd ..
 	else
 		echo "Cloning $mod ($SVN_BASE/$mod)"
@@ -81,22 +82,37 @@ for mod in $GIT_MODULES; do
 	fi
 done
 
-# Configure version versions to use
+# Configure branches
+
+cd mono
+HAS_MONO_2_8_BRANCH=`git branch | grep mono-2-8 | wc -l`
+if [ $HAS_MONO_2_8_BRANCH == "0" ]; then
+	git checkout --track -b mono-2-8 origin/mono-2-8
+fi
+cd ..
 
 # Use a sane gtk-sharp version
 cd gtk-sharp
-git checkout --track -b gtk-sharp-2-12-branch origin/gtk-sharp-2-12-branch
+if [ git branch | grep gtk-sharp-2-12-branch | wc -l == "0" ]; then
+	git checkout --track -b gtk-sharp-2-12-branch origin/gtk-sharp-2-12-branch
+if
 cd ..
+
+# Configure version versions to use
 
 if [ $VERSION == "trunk" ]; then
 	cd mono
 	git checkout master
+	git pull
 	cd ..
-elif [ $VERSION == "2.6" ]; then
+elif [ $VERSION == "2.8" ]; then
 	cd mono
-	git checkout --track -b mono-2-6 origin/mono-2-6
+	git checkout mono-2-8
+	git pull
 	cd ..
 fi
+
+INSTALL_MODULES="libgdiplus mono"
 
 # create enviroment files
 cat > "mono-$VERSION-environment" <<EOF
@@ -133,7 +149,7 @@ sudo mv mono-$VERSION /usr/local/bin/mono-$VERSION
 . mono-$VERSION-environment
 
 # configure, make, install
-for mod in $GIT_MODULES; do
+for mod in $INSTALL_MODULES; do
 	echo "$ECHO_PREFIX Installing $mod"
 	cd $mod
 	if [ $mod == "gtk-sharp" ]; then
