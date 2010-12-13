@@ -123,6 +123,8 @@ checkout_correct_version ()
             git checkout 2.4
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-8
+        elif [ $mod == "xsp" ]; then
+            git checkout mono-2-8
         fi
     elif [ $VERSION == "2.6.7" ]; then
         echo "$ECHO_PREFIX Configuring $mod for version 2.6.7"
@@ -143,6 +145,8 @@ checkout_correct_version ()
         elif [ $mod == "monodevelop" ]; then
             git checkout 2.4
         elif [ $mod == "debugger" ]; then
+            git checkout mono-2-6
+        elif [ $mod == "xsp" ]; then
             git checkout mono-2-6
         fi
     fi
@@ -219,6 +223,9 @@ else
             elif [ $mod == "monodevelop" ]; then
                 git checkout --track origin/2.4
             elif [ $mod == "debugger" ]; then
+                git checkout --track origin/mono-2-6
+                git checkout --track origin/mono-2-8
+            elif [ $mod == "xsp" ]; then
                 git checkout --track origin/mono-2-6
                 git checkout --track origin/mono-2-8
             fi
