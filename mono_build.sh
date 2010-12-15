@@ -278,7 +278,7 @@ if [ "$skipbuild" ]; then
 else
     for mod in $GIT_MODULES; do
 
-        if [ "$VERSION$mod" == "2.6.7llvm" ]; then
+        if [ "$VERSION$mod" == "2.6llvm" ]; then
             echo "$ECHO_PREFIX Skipping LLVM for this 2.6.7";
             continue
         fi
