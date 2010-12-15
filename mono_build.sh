@@ -68,10 +68,10 @@ u) skipupdate=1
 echo "$ECHO_PREFIX Skipping source code update"
 ;;
 v) VERSION=$OPTARG
-if [[ $VERSION == "master" || $VERSION == "2.8" || $VERSION == "2.6.7" ]]; then
+if [[ $VERSION == "master" || $VERSION == "2.8" || $VERSION == "2.6" ]]; then
     echo "$ECHO_PREFIX Building version $VERSION"
 else
-    echo "$ECHO_PREFIX Error: Only master, 2.8, 2.6.7 versions supported"
+    echo "$ECHO_PREFIX Error: Only master, 2.8, 2.6 versions supported"
     exit 1
 fi
 ;;
@@ -104,7 +104,7 @@ checkout_correct_version ()
         fi
     elif [ $VERSION == "2.8" ]; then
         echo "$ECHO_PREFIX Configuring $mod for version 2.8"
-                
+
         if [ $mod == "mono" ]; then
             git checkout mono-2-8
         elif [ $mod == "gtk-sharp" ]; then
@@ -126,10 +126,10 @@ checkout_correct_version ()
         elif [ $mod == "xsp" ]; then
             git checkout mono-2-8
         fi
-    elif [ $VERSION == "2.6.7" ]; then
-        echo "$ECHO_PREFIX Configuring $mod for version 2.6.7"
+    elif [ $VERSION == "2.6" ]; then
+        echo "$ECHO_PREFIX Configuring $mod for version 2.6"
         if [ $mod == "mono" ]; then
-            git checkout mono-2-6-7
+            git checkout mono-2-6
         elif [ $mod == "gtk-sharp" ]; then
             git checkout gtk-sharp-2-12-branch
         elif [ $mod == "gnome-sharp" ]; then
@@ -197,8 +197,8 @@ if [ "$skipupdate" ]; then
 else
     # check it all out or update
     for mod in $GIT_MODULES; do
-        if [ "$VERSION$mod" == "2.6.7llvm" ]; then
-            echo "$ECHO_PREFIX skipping LLVM for this version";
+        if [ "$VERSION$mod" == "2.6llvm" ]; then
+            echo "$ECHO_PREFIX skipping LLVM for this mono version [$VERSION]";
         elif [ -d $mod ]; then
             echo "$ECHO_PREFIX Updating $mod"
             cd ${mod}
@@ -210,28 +210,28 @@ else
             git clone ${GIT_BASE}/${mod}.git || { echo "$ECHO_PREFIX ERROR: Cloning $mod failed"; exit 1; }
 
             cd ${mod}
-            
+
             if [ $mod == "mono" ]; then
-                git checkout --track origin/mono-2-8
-                git checkout --track origin/mono-2-6-7
+                git checkout --track -b mono-2-8 origin/mono-2-8
+                git checkout --track -b mono-2-6 origin/mono-2-6
             elif [ $mod == "gtk-sharp" ]; then
                 git checkout --track origin/gtk-sharp-2-12-branch
             elif [ $mod == "gnome-desktop-sharp" ]; then
-                git checkout --track origin/gnome-desktop-sharp-2-24-branch
+                git checkout --track -b gnome-desktop-sharp-2-24-branch origin/gnome-desktop-sharp-2-24-branch
             elif [ $mod == "mono-addins" ]; then
-                git checkout --track origin/0.5
+                git checkout --track -b 0.5 origin/0.5
             elif [ $mod == "monodevelop" ]; then
-                git checkout --track origin/2.4
+                git checkout --track -b 2.4 origin/2.4
             elif [ $mod == "debugger" ]; then
-                git checkout --track origin/mono-2-6
-                git checkout --track origin/mono-2-8
+                git checkout --track -b mono-2-6 origin/mono-2-6
+                git checkout --track -b mono-2-8 origin/mono-2-8
             elif [ $mod == "xsp" ]; then
-                git checkout --track origin/mono-2-6
-                git checkout --track origin/mono-2-8
+                git checkout --track -b mono-2-6 origin/mono-2-6
+                git checkout --track -b mono-2-8 origin/mono-2-8
             fi
-            
+
             checkout_correct_version
-            
+
             cd ..
         fi
     done
