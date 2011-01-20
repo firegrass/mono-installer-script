@@ -37,13 +37,14 @@ skipupdate=
 skipbuild=
 pauseflag=
 inpvar=
+cleangit=
 prefix=/opt
 
 ECHO_PREFIX="-- "
 
 GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono"
 
-while getopts ‘abm:ituv:p:h’ opt
+while getopts ‘abm:ituv:p:hc’ opt
 do
 case $opt in
 a) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
@@ -72,6 +73,9 @@ else
     exit 1
 fi
 ;;
+c) cleangit=1
+echo "$ECHO_PREFIX Cleaning git repository before build"
+;;
 p) prefix=$OPTARG
 echo "$ECHO_PREFIX Using prefix $prefix"
 ;;
@@ -93,6 +97,8 @@ h)
     echo "  -u   Do not update source code, just build"
     echo
     echo "  -b   Do not build, just update source code"
+    echo
+    echo "  -c   Clean git before building"
     echo
     echo "Example"
     echo ""
@@ -253,6 +259,10 @@ else
         elif [ -d $mod ]; then
             echo "$ECHO_PREFIX Updating $mod"
             cd ${mod}
+            if [ "$cleangit" ]; then
+                git reset --hard
+                git clean -df
+            fi
             checkout_correct_version
             git pull || { echo "$ECHO_PREFIX ERROR: Updating $mod failed, you will need to manually ‘git clean -df’"; exit 1; }
             cd ..
