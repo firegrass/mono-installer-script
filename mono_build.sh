@@ -32,9 +32,6 @@
 # Config
 #
 
-#default version is master. Also supported is "2.8"
-VERSION=master
-
 #option -s skips updating files from github
 skipupdate=
 skipbuild=
@@ -68,10 +65,10 @@ u) skipupdate=1
 echo "$ECHO_PREFIX Skipping source code update"
 ;;
 v) VERSION=$OPTARG
-if [[ $VERSION == "master" || $VERSION == "2.8" || $VERSION == "2.6" ]]; then
+if [[ $VERSION == "master" || $VERSION == "2.10" || $VERSION == "2.8" || $VERSION == "2.6" ]]; then
     echo "$ECHO_PREFIX Building version $VERSION"
 else
-    echo "$ECHO_PREFIX Error: Only master, 2.8, 2.6 versions supported"
+    echo "$ECHO_PREFIX Error: Only master, 2.10, 2.8, 2.6 versions supported"
     exit 1
 fi
 ;;
@@ -79,11 +76,36 @@ p) prefix=$OPTARG
 echo "$ECHO_PREFIX Using prefix $prefix"
 ;;
 h) 
-    echo "Usage: build_mono_parallel [-v version] [-p prefix] [-s] [-t]"; 
+    echo "Usage: mono_build.sh [-v version] [-p prefix] [-m gitmodules] [-i] [-s] [-t]";
+    echo
+    echo "Command line options"
+    echo
+    echo "  -v   specify version of mono"
+    echo
+    echo "  -p   specify prefix to install"
+    echo
+    echo "  -m   specify git modules to build [ libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
+    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp"
+    echo "       mono-tools debugger monodevelop]"
+    echo
+    echo "  -i   Interactive mode, pause between each modules make and make install. Allows skipping of modules"
+    echo
+    echo "  -u   Do not update source code, just build"
+    echo
+    echo "  -b   Do not build, just update source code"
+    echo
+    echo "Example"
+    echo ""
+    echo "  mono_build.sh -v 2.6 -p ~/mono -m libgdiplus mono gtk-sharp mono-tools"
     exit 0
 ;;
 esac
 done
+
+if [[ -z "$VERSION" ]]; then
+    echo "$ECHO_PREFIX Error: Please specify a mono version to build with -v; master, 2.10, 2.8, 2.6 versions are supported"
+    exit 1
+fi
 
 WORKING_DIR=~/mono-src
 
@@ -101,6 +123,31 @@ checkout_correct_version ()
             git checkout gtk-sharp-2-12-branch
         else
             git checkout master
+        fi
+    elif [ $VERSION == "2.10" ]; then
+        echo "$ECHO_PREFIX Configuring $mod for version 2.10"
+        if [ $mod == "mono" ]; then
+            git checkout mono-2-10
+        elif [ $mod == "gtk-sharp" ]; then
+            git checkout gtk-sharp-2-12-branch
+        elif [ $mod == "gnome-sharp" ]; then
+            git checkout master
+        elif [ $mod == "webkit-sharp" ]; then
+            git checkout master
+        elif [ $mod == "gtkmozembed-sharp" ]; then
+            git checkout master
+        elif [ $mod == "gnome-desktop-sharp" ]; then
+            git checkout gnome-desktop-sharp-2-24-branch
+        elif [ $mod == "mono-addins" ]; then
+            git checkout 0.5
+        elif [ $mod == "monodevelop" ]; then
+            git checkout 2.4
+        elif [ $mod == "debugger" ]; then
+            git checkout mono-2-6
+        elif [ $mod == "xsp" ]; then
+            git checkout mono-2-6
+        elif [ $mod == "mono-tools" ]; then
+            git checkout mono-2-10
         fi
     elif [ $VERSION == "2.8" ]; then
         echo "$ECHO_PREFIX Configuring $mod for version 2.8"
@@ -125,6 +172,8 @@ checkout_correct_version ()
             git checkout mono-2-8
         elif [ $mod == "xsp" ]; then
             git checkout mono-2-8
+        elif [ $mod == "mono-tools" ]; then
+            git checkout mono-2-8
         fi
     elif [ $VERSION == "2.6" ]; then
         echo "$ECHO_PREFIX Configuring $mod for version 2.6"
@@ -147,6 +196,8 @@ checkout_correct_version ()
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-6
         elif [ $mod == "xsp" ]; then
+            git checkout mono-2-6
+        elif [ $mod == "mono-tools" ]; then
             git checkout mono-2-6
         fi
     fi
@@ -214,6 +265,7 @@ else
             if [ $mod == "mono" ]; then
                 git checkout --track -b mono-2-8 origin/mono-2-8
                 git checkout --track -b mono-2-6 origin/mono-2-6
+                git checkout --track -b mono-2-6 origin/mono-2-10
             elif [ $mod == "gtk-sharp" ]; then
                 git checkout --track origin/gtk-sharp-2-12-branch
             elif [ $mod == "gnome-desktop-sharp" ]; then
@@ -228,6 +280,10 @@ else
             elif [ $mod == "xsp" ]; then
                 git checkout --track -b mono-2-6 origin/mono-2-6
                 git checkout --track -b mono-2-8 origin/mono-2-8
+            elif [ $mod == "mono-tools" ]; then
+                git checkout --track -b mono-2-6 origin/mono-2-6
+                git checkout --track -b mono-2-8 origin/mono-2-8
+                git checkout --track -b mono-2-8 origin/mono-2-10
             fi
 
             checkout_correct_version
