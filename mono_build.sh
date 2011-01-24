@@ -151,7 +151,7 @@ checkout_correct_version ()
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-6
         elif [ $mod == "xsp" ]; then
-            git checkout mono-2-6
+            git checkout master
         elif [ $mod == "mono-tools" ]; then
             git checkout mono-2-10
         fi
