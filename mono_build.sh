@@ -145,7 +145,7 @@ checkout_correct_version ()
         elif [ $mod == "gnome-desktop-sharp" ]; then
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
-            git checkout 0.5
+            git checkout master
         elif [ $mod == "monodevelop" ]; then
             git checkout 2.4
         elif [ $mod == "debugger" ]; then
