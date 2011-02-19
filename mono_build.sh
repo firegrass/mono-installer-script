@@ -2,9 +2,9 @@
 #
 # Version 0.2
 # This script is to install a parallel mono environment with ease
-# It only checks out/installs mono 2.6 branch on Ubuntu 9.10 atm
+# It checks out/installs mono 2.6, 2.8, 2.10, or master branch on Ubuntu 11.04 
 #
-# Copyright 2009 (c) QMTech Ltd (http://www.qmtech.net)
+# Copyright 2009-2011 (c) QMTech Ltd (http://www.qmtech.net)
 # Authors: Patrick McEvoy (firegrass) patrick@qmtech.net
 # Contributions from Dan Quirk, William F. Cook
 # This is free script under GNU GPL version 3.
@@ -12,27 +12,15 @@
 # Modified by William F. Cook for use at DRS AMTC to build full monodevelop environment
 # DRS Notes:
 # * LLVM is built but not loaded by default. Modify mono-2.8 & mono-2.8-env
-# with the "export MONO_USE_LLVM=1" in order to turn it on by defalut
-# * mono is built mostly default options. You may want to add
-# --enable-big-arrays or other options
-#
-#
-# To get XSP to build, you may first have to modifi ./mono-src-$VERSION/xsp/docs/makefile.am
+# with the "export MONO_USE_LLVM=1" in order to turn it on by default
+# * To get XSP to build, you may first have to modifi ./mono-src-$VERSION/xsp/docs/makefile.am
 # to change:
-#
 # INSTALLATION_DIR=$(shell pkg-config monodoc --variable=sourcesdir)
-#
 # to:
-#
 # INSTALLATION_DIR=/opt/mono-2.8/lib/monodoc/sources
-#
 # I’m working on that…
 
-#
-# Config
-#
-
-#option -s skips updating files from github
+#options
 skipupdate=
 skipbuild=
 pauseflag=
@@ -41,8 +29,6 @@ cleangit=
 prefix=/opt
 
 ECHO_PREFIX="-- "
-
-GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono"
 
 while getopts ‘abm:ituv:p:hc’ opt
 do
@@ -53,14 +39,23 @@ echo "$ECHO_PREFIX Building all"
 b) skipbuild=1
 echo "$ECHO_PREFIX Skipping build"
 ;;
-m) GIT_MODULES="$OPTARG"
-echo "$ECHO_PREFIX Building $GIT_MODULES"
+c) cleangit=1
+echo "$ECHO_PREFIX Cleaning git repository before build"
 ;;
 i) pauseflag=1
 echo "$ECHO_PREFIX Pausing before configure/make/install steps"
 ;;
-t) GIT_MODULES="mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
-echo "$ECHO_PREFIX Building mono development tools"
+m) GIT_MODULES="$OPTARG"
+echo "$ECHO_PREFIX Building $GIT_MODULES"
+;;
+p) prefix=$OPTARG
+echo "$ECHO_PREFIX Using prefix $prefix"
+;;
+s) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono"
+echo "$ECHO_PREFIX Building mono"
+;;
+t) GIT_MODULES="libgdiplus mono gtk-sharp xsp mod_mono mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
+echo "$ECHO_PREFIX Building mono and development tools, without llvm, not required for asp.net development"
 ;;
 u) skipupdate=1
 echo "$ECHO_PREFIX Skipping source code update"
@@ -73,24 +68,27 @@ else
     exit 1
 fi
 ;;
-c) cleangit=1
-echo "$ECHO_PREFIX Cleaning git repository before build"
-;;
-p) prefix=$OPTARG
-echo "$ECHO_PREFIX Using prefix $prefix"
-;;
 h) 
-    echo "Usage: mono_build.sh [-v version] [-p prefix] [-m gitmodules] [-i] [-s] [-t]";
+    echo "Usage: mono_build.sh [-v] [-p] [-m] [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]";
     echo
     echo "Command line options"
     echo
-    echo "  -v   specify version of mono"
+    echo "  -v   specify version of mono - master, 2.6, 2.8, 2.10"
     echo
     echo "  -p   specify prefix to install"
     echo
-    echo "  -m   specify git modules to build [ libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
+    echo "  -m   specify ONLY these git modules to build, choose from - libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
     echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp"
-    echo "       mono-tools debugger monodevelop]"
+    echo "       mono-tools debugger monodevelop"
+    echo
+    echo "  -r   Just build mono, builds modules -libgdiplus llvm mono gtk-sharp xsp mod_mono"
+    echo
+    echo "  -s   Just build development modules, builds modules -mono-basic"
+    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
+    echo
+    echo "  -t   Build all modules but llvm (takes long time to compile) not required for asp.net development"
+    echo
+    echo "  -a   Build all modules"
     echo
     echo "  -i   Interactive mode, pause between each modules make and make install. Allows skipping of modules"
     echo
@@ -100,9 +98,10 @@ h)
     echo
     echo "  -c   Clean git before building"
     echo
-    echo "Example"
+    echo "Examples"
     echo ""
-    echo "  mono_build.sh -v 2.6 -p ~/mono -m libgdiplus mono gtk-sharp mono-tools"
+    echo "  mono_build.sh -v 2.10 -p ~/mono -r"
+    echo "  mono_build.sh -v 2.10 -p ~/mono -m mono-addins mono-tools"
     exit 0
 ;;
 esac
@@ -110,6 +109,10 @@ done
 
 if [[ -z "$VERSION" ]]; then
     echo "$ECHO_PREFIX Error: Please specify a mono version to build with -v; master, 2.10, 2.8, 2.6 versions are supported"
+    exit 1
+fi
+if [[ -z "$GIT_MODULES" ]]; then
+    echo "$ECHO_PREFIX Error: Please specify which modules to install -r, base mono install, -s, development modules, -t, all but llvm, -a, all"
     exit 1
 fi
 
@@ -397,8 +400,8 @@ fi
 
 # Exit message
 echo ""
-echo "$ECHO_PREFIX Your parallel environment is installed"
-echo "$ECHO_PREFIX To start a mono-$VERSION environment, run: source mono-$VERSION-env"
+echo "$ECHO_PREFIX Your parallel environment is installed in $MONO_PREFIX"
+echo "$ECHO_PREFIX To start a mono-$VERSION environment, run: source mono-$VERSION-environment"
 echo "$ECHO_PREFIX To use mono-$VERSION to run a cli app, run: mono-$VERSION (eg mono-$VERSION mono -V)"
 echo ""
 
