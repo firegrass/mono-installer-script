@@ -1,1 +1,7 @@
-Helper scripts to get an up-to-date mono environment installed without trashing your distro version
+Helper scripts to get an up-to-date mono environment installed on Ubuntu without trashing your distro version.
+
+Run 
+
+./mono-build.sh -h
+
+to see options and examples
