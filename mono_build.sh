@@ -9,16 +9,7 @@
 # Contributions from Dan Quirk, William F. Cook
 # This is free script under GNU GPL version 3.
 
-# Modified by William F. Cook for use at DRS AMTC to build full monodevelop environment
-# DRS Notes:
-# * LLVM is built but not loaded by default. Modify mono-2.8 & mono-2.8-env
-# with the "export MONO_USE_LLVM=1" in order to turn it on by default
-# * To get XSP to build, you may first have to modifi ./mono-src-$VERSION/xsp/docs/makefile.am
-# to change:
-# INSTALLATION_DIR=$(shell pkg-config monodoc --variable=sourcesdir)
-# to:
-# INSTALLATION_DIR=/opt/mono-2.8/lib/monodoc/sources
-# I’m working on that…
+# LLVM is built but not loaded by default. Use "export MONO_USE_LLVM=1" to turn it on
 
 #options
 skipupdate=
@@ -69,7 +60,7 @@ else
 fi
 ;;
 h) 
-    echo "Usage: mono_build.sh [-v] [-p] [-m] [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]";
+    echo "Usage: mono_build.sh [-v version] [-p prefix] [-m gitmodules] [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]";
     echo
     echo "Command line options"
     echo
