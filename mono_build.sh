@@ -52,7 +52,7 @@ echo "$ECHO_PREFIX Building $GIT_MODULES"
 p) prefix=$OPTARG
 echo "$ECHO_PREFIX Using prefix $prefix"
 ;;
-r) GIT_MODULES="libgdiplus mono gtk-sharp xsp mod_mono"
+r) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono"
 echo "$ECHO_PREFIX Building mono"
 ;;
 s) GIT_MODULES="mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
@@ -141,8 +141,6 @@ checkout_correct_version ()
         echo "$ECHO_PREFIX Configuring $mod for version 2.10"
         if [ $mod == "mono" ]; then
             git checkout mono-2-10
-	elif [ $mod == "libgdiplus" ]; then
-            git checkout master
         elif [ $mod == "gtk-sharp" ]; then
             git checkout gtk-sharp-2-12-branch
         elif [ $mod == "gnome-sharp" ]; then
@@ -158,7 +156,7 @@ checkout_correct_version ()
         elif [ $mod == "monodevelop" ]; then
             git checkout master
         elif [ $mod == "debugger" ]; then
-            git checkout mono-2-8
+            git checkout master
         elif [ $mod == "xsp" ]; then
             git checkout master
         elif [ $mod == "mono-tools" ]; then
@@ -377,8 +375,6 @@ else
 	    	./bootstrap-2.24 --prefix=$MONO_PREFIX
 	    elif [ $mod == "llvm" ]; then
 	        ./configure --enable-optimized
-	    elif [ $mod == "monodevelop" ]; then
-	        ./configure --prefix=$MONO_PREFIX
 	    elif [[ $mod == "mono" && $GIT_MODULES == "*llvm*" ]]; then
 	        ./autogen.sh --prefix=$MONO_PREFIX --enable-llvm
     	else
