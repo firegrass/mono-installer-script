@@ -28,6 +28,7 @@ inpvar=
 cleangit=
 prefix=/opt
 
+
 ECHO_PREFIX="-- "
 
 while getopts ‘abm:irstuv:p:hc’ opt
