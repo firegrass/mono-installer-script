@@ -366,6 +366,8 @@ else
 	    	./bootstrap-2.24 --prefix=$MONO_PREFIX
 	    elif [ $mod == "llvm" ]; then
 	        ./configure --enable-optimized
+	    elif [ $mod == "monodevelop" ]; then	
+        	./configure --prefix=$MONO_PREFIX
 	    elif [[ $mod == "mono" && $GIT_MODULES == "*llvm*" ]]; then
 	        ./autogen.sh --prefix=$MONO_PREFIX --enable-llvm
     	else
