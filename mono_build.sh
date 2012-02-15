@@ -6,7 +6,7 @@
 #
 # Copyright 2009-2011 (c) QMTech Ltd (http://www.qmtech.net)
 # Authors: Patrick McEvoy (firegrass) patrick@qmtech.net
-# Contributions from Dan Quirk, William F. Cook
+# Contributions from Dan Quirk, William F. Cook, Vsevolod Kukol
 # This is free script under GNU GPL version 3.
 
 # LLVM is built but not loaded by default. Use "export MONO_USE_LLVM=1" to turn it on
@@ -210,7 +210,7 @@ checkout_correct_version ()
 
 echo "$ECHO_PREFIX Copyright 2009 (c) QMTech Ltd (http://www.qmtech.net)"
 echo "$ECHO_PREFIX Authors: Patrick McEvoy (firegrass) patrick@qmtech.net"
-echo "$ECHO_PREFIX Contributions from Dan Quirk,⋅Stefan Forster"
+echo "$ECHO_PREFIX Contributions from Dan Quirk,⋅Stefan Forster, Vsevolod Kukol"
 echo "$ECHO_PREFIX This is free script under GNU GPL version 3."
 
 MONO_PREFIX=$prefix/mono-$VERSION
@@ -223,14 +223,36 @@ sudo echo "$ECHO_PREFIX If the sudo time limit is reached you will need to enter
 echo "$ECHO_PREFIX Report bugs to patrick@qmtech.net, firegrass on twitter, carrier pidgeon etc"
 
 # install dependencies
-sudo apt-get install build-essential automake libtool gettext gawk intltool \
-libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
-bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
-libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
-libpanel-applet2-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev libgtkhtml3.14-dev libgtksourceview2.0-dev libnautilus-burn-dev librsvg2-dev libvte-dev libwncksync-dev \
-libnspr4-dev libnss3-dev libwebkit-dev xulrunner-dev \
-apache2-threaded-dev \
--y
+
+. /etc/lsb-release
+
+UBUNTU_VERSION=$(echo $DISTRIB_RELEASE |tr -d '.')
+
+if [ $UBUNTU_VERSION -le 1104 ]; then
+
+	sudo apt-get install build-essential automake libtool gettext gawk intltool \
+	libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
+	bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
+	libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
+	libpanel-applet2-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev libgtkhtml3.14-dev \
+	libgtksourceview2.0-dev libnautilus-burn-dev librsvg2-dev libvte-dev libwncksync-dev \
+	libnspr4-dev libnss3-dev libwebkit-dev xulrunner-dev \
+	apache2-threaded-dev \
+	-y
+
+else
+
+	sudo apt-get install build-essential automake libtool gettext gawk intltool \
+	libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
+	bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
+	libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
+	libgnome-desktop-dev libgnome-desktop-3-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev \
+	libgtkhtml3.14-dev libgtksourceview2.0-dev librsvg2-dev libvte-dev \
+	libnspr4-dev libnss3-dev libwebkit-dev \
+	apache2-threaded-dev \
+	-y
+
+fi
 
 # you really shouldn’t be doing this as root, you know…
 if [ "$(id -u)" = "0" ]; then
