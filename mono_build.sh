@@ -22,7 +22,10 @@ prefix=/opt
 
 ECHO_PREFIX="-- "
 
-while getopts ‘abd:m:irstuv:p:hc’ opt
+# git path for mono sources
+GIT_BASE=http://github.com/mono
+
+while getopts ‘abd:lm:irstuv:p:hc’ opt
 do
 case $opt in
 a) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
@@ -36,6 +39,17 @@ echo "$ECHO_PREFIX Cleaning git repository before build"
 ;;
 i) pauseflag=1
 echo "$ECHO_PREFIX Pausing before configure/make/install steps"
+;;
+l) missingdep=
+[ "$(which xmlstarlet)" == "" ] && missingdep="$missingdep xmlstarlet"
+if [ ! -z $missingdep ]; then
+    echo "$ECHO_PREFIX The following packages are required to fetch the module list from GitHub:"
+    echo "$ECHO_PREFIX -> $missingdep"
+    echo "$ECHO_PREFIX I need sudo access to install missing dependecies."
+    sudo apt-get install $missingdep -y
+fi
+wget --timeout=30 --quiet -O - http://github.com/api/v2/xml/repos/show/mono |  xmlstarlet sel -T -t -m '//repository' -v name -o "§" -v description -n | column -t -s '§' | cut -c 1-$(tput cols)
+exit
 ;;
 m) GIT_MODULES="$OPTARG"
 echo "$ECHO_PREFIX Building $GIT_MODULES"
@@ -82,6 +96,9 @@ h)
     echo "  -m   specify ONLY these git modules to build, choose from - libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
     echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp"
     echo "       mono-tools debugger monodevelop"
+    echo
+    echo "  -l   Fetch and display the list with all available modules"
+    echo "       from $GIT_BASE"
     echo
     echo "  -r   Just build mono, builds modules: libgdiplus llvm mono gtk-sharp xsp mod_mono"
     echo
@@ -292,9 +309,6 @@ sudo echo "$ECHO_PREFIX If the sudo time limit is reached you will need to enter
 # making a dir to work from
 mkdir -p $WORKING_DIR
 cd $WORKING_DIR
-
-# git path for mono sources
-GIT_BASE=http://github.com/mono
 
 if [ "$skipupdate" ]; then
     echo "$ECHO_PREFIX Skipping source update"
