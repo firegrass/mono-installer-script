@@ -22,7 +22,7 @@ prefix=/opt
 
 ECHO_PREFIX="-- "
 
-while getopts ‘abm:irstuv:p:hc’ opt
+while getopts ‘abd:m:irstuv:p:hc’ opt
 do
 case $opt in
 a) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
@@ -63,12 +63,19 @@ else
     exit 1
 fi
 ;;
+d) MDVERSION=$OPTARG
+echo "$ECHO_PREFIX Building custom Monodevelop version $MDVERSION"
+;;
 h) 
-    echo "Usage: mono_build.sh [-v version] [-p prefix] [-m gitmodules] [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]";
+    echo "Usage: mono_build.sh [-v version] [-d mdversion] [-p prefix] [-m gitmodules]";
+    echo "                     [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]"
     echo
     echo "Command line options"
     echo
     echo "  -v   specify version of mono - master, 2.6, 2.8, 2.10"
+    echo
+    echo "  -d   specify different version of monodevelop - master, 2.6, 2.8, 2.9, or any other monodevelop branch."
+    echo "       If the specific version does not exist, the script will fallback to the default for the selected mono version."
     echo
     echo "  -p   specify prefix to install"
     echo
@@ -111,6 +118,21 @@ if [[ -z "$GIT_MODULES" ]]; then
     exit 1
 fi
 
+if [ $VERSION == "master" ]; then
+    DEFAULT_MDVERSION="master"
+elif [ $VERSION == "2.10" ]; then
+    DEFAULT_MDVERSION="2.8.6"
+elif [ $VERSION == "2.8" ]; then
+    DEFAULT_MDVERSION="2.4"
+elif [ $VERSION == "2.6" ]; then
+    DEFAULT_MDVERSION="2.4"
+fi
+
+if [[ -z "$MDVERSION" ]]; then
+    MDVERSION=$DEFAULT_MDVERSION
+    echo "$ECHO_PREFIX Building default Monodevelop version $MDVERSION"
+fi
+
 WORKING_DIR=~/mono-src
 
 #
@@ -120,6 +142,17 @@ WORKING_DIR=~/mono-src
 checkout_correct_version ()
 {
     # Configure version to use
+    if [ $mod == "monodevelop" ]; then
+        echo "$ECHO_PREFIX Configuring monodevelop for version $MDVERSION"
+        git checkout $MDVERSION
+        if [ $? -ne 0 ]; then
+            echo "$ECHO_PREFIX monodevelop version $MDVERSION not found! Falling back to default!"
+            MDVERSION=$DEFAULT_MDVERSION
+            git checkout $MDVERSION
+        fi
+        return
+    fi
+
     if [ $VERSION == "master" ]; then
         echo "$ECHO_PREFIX Configuring $mod for master"
         # gtk-sharp always requires 2.12 branch
@@ -143,8 +176,6 @@ checkout_correct_version ()
         elif [ $mod == "gnome-desktop-sharp" ]; then
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
-            git checkout master
-        elif [ $mod == "monodevelop" ]; then
             git checkout master
         elif [ $mod == "debugger" ]; then
             git checkout master
@@ -170,8 +201,6 @@ checkout_correct_version ()
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
             git checkout 0.5
-        elif [ $mod == "monodevelop" ]; then
-            git checkout 2.4
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-8
         elif [ $mod == "xsp" ]; then
@@ -195,8 +224,6 @@ checkout_correct_version ()
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
             git checkout 0.5
-        elif [ $mod == "monodevelop" ]; then
-            git checkout 2.4
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-6
         elif [ $mod == "xsp" ]; then
