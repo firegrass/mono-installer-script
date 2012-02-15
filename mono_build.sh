@@ -422,7 +422,13 @@ else
 	    elif [[ $mod == "mono" && $GIT_MODULES == "*llvm*" ]]; then
 	        ./autogen.sh --prefix=$MONO_PREFIX --enable-llvm
     	else
-            ./autogen.sh --prefix=$MONO_PREFIX
+            if [ -f ./autogen.sh ]; then
+                ./autogen.sh --prefix=$MONO_PREFIX
+            elif [ -f ./configure ]; then
+                ./configure --prefix=$MONO_PREFIX
+            else
+                read -p "$ECHO_PREFIX ERROR: $mod configuration script not found, press enter to continue" inpVar; cd ..; continue;
+            fi
         fi
 
         make || { read -p "$ECHO_PREFIX ERROR: $mod failed to compile, press enter to continue" inpVar; cd ..; continue; }
