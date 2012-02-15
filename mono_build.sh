@@ -81,35 +81,41 @@ d) MDVERSION=$OPTARG
 echo "$ECHO_PREFIX Building custom Monodevelop version $MDVERSION"
 ;;
 h) 
-    echo "Usage: mono_build.sh [-v version] [-d mdversion] [-p prefix] [-m gitmodules]";
+    echo "Usage: mono_build.sh [-v version] [-d mdversion]"
+    echo "                     [-p prefix] [-m gitmodules]"
     echo "                     [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]"
     echo
     echo "Command line options"
     echo
     echo "  -v   specify version of mono - master, 2.6, 2.8, 2.10"
     echo
-    echo "  -d   specify different version of monodevelop - master, 2.6, 2.8, 2.9, or any other monodevelop branch."
-    echo "       If the specific version does not exist, the script will fallback to the default for the selected mono version."
+    echo "  -d   specify different version of monodevelop - master, 2.6, 2.8,"
+    echo "       2.9, or any other monodevelop branch."
+    echo "       If the specific version does not exist, the script will"
+    echo "       fallback to the default for the selected mono version."
     echo
-    echo "  -p   specify prefix to install"
+    echo "  -p   specify prefix to install (DEFAULT: $prefix)"
     echo
-    echo "  -m   specify ONLY these git modules to build, choose from - libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
-    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp"
-    echo "       mono-tools debugger monodevelop"
+    echo "  -m   specify ONLY these git modules to build. (see also -l)"
     echo
     echo "  -l   Fetch and display the list with all available modules"
     echo "       from $GIT_BASE"
     echo
-    echo "  -r   Just build mono, builds modules: libgdiplus llvm mono gtk-sharp xsp mod_mono"
+    echo "  -r   Just build mono, builds modules:"
+    echo "           libgdiplus llvm mono gtk-sharp xsp mod_mono"
     echo
-    echo "  -s   Just build development modules, builds modules: mono-basic"
-    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
+    echo "  -s   Just build development modules, builds modules:"
+    echo "           mono-basic mono-addins gtkmozembed-sharp webkit-sharp"
+    echo "           gluezilla gnome-sharp gnome-desktop-sharp mono-tools"
+    echo "           debugger monodevelop"
     echo
-    echo "  -t   Build all modules but llvm (takes long time to compile) not required for asp.net development"
+    echo "  -a   Build mono and development modules (-s -r together)"
     echo
-    echo "  -a   Build all modules"
+    echo "  -t   Build mono and development modules without llvm"
+    echo "       (only for asp.net development!)"
     echo
-    echo "  -i   Interactive mode, pause between each modules make and make install. Allows skipping of modules"
+    echo "  -i   Interactive mode, pause between each modules make and"
+    echo "       make install. Allows skipping of modules"
     echo
     echo "  -u   Do not update source code, just build"
     echo
