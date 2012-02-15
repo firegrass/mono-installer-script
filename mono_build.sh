@@ -440,6 +440,13 @@ else
         
         sudo make install || { read -p "$ECHO_PREFIX ERROR: $mod failed, press enter to continue" inpVar; cd ..; continue; }
         
+        if [ $mod == "monodevelop" ]; then
+            sudo cp $MONO_PREFIX/share/applications/monodevelop.desktop /usr/share/applications/monodevelop-$MDVERSION.desktop
+            sudo sed -e "s#^Exec=monodevelop#Exec=mono-$VERSION monodevelop#g" \
+                     -e "s#^TryExec=MonoDevelop#TryExec=mono-$VERSION#g" \
+                     -e "s#^Name=MonoDevelop#Name=MonoDevelop $MDVERSION#g" \
+                     -i /usr/share/applications/monodevelop-$MDVERSION.desktop
+        fi
         cd ..
         
     done
