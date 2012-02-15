@@ -457,6 +457,11 @@ else
         
     done
 
+    if [ ! -z "$(which monodoc)" ]; then
+        echo "$ECHO_PREFIX Generating monodoc search index..."
+        monodoc --make-index > /dev/null
+        monodoc --make-search-index > /dev/null
+    fi
 fi
 
 # Exit message
