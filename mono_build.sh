@@ -6,7 +6,7 @@
 #
 # Copyright 2009-2011 (c) QMTech Ltd (http://www.qmtech.net)
 # Authors: Patrick McEvoy (firegrass) patrick@qmtech.net
-# Contributions from Dan Quirk, William F. Cook
+# Contributions from Dan Quirk, William F. Cook, Vsevolod Kukol
 # This is free script under GNU GPL version 3.
 
 # LLVM is built but not loaded by default. Use "export MONO_USE_LLVM=1" to turn it on
@@ -22,7 +22,10 @@ prefix=/opt
 
 ECHO_PREFIX="-- "
 
-while getopts ‘abm:irstuv:p:hc’ opt
+# git path for mono sources
+GIT_BASE=http://github.com/mono
+
+while getopts ‘abd:lm:irstuv:p:hc’ opt
 do
 case $opt in
 a) GIT_MODULES="libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
@@ -36,6 +39,17 @@ echo "$ECHO_PREFIX Cleaning git repository before build"
 ;;
 i) pauseflag=1
 echo "$ECHO_PREFIX Pausing before configure/make/install steps"
+;;
+l) missingdep=
+[ "$(which xmlstarlet)" == "" ] && missingdep="$missingdep xmlstarlet"
+if [ ! -z $missingdep ]; then
+    echo "$ECHO_PREFIX The following packages are required to fetch the module list from GitHub:"
+    echo "$ECHO_PREFIX -> $missingdep"
+    echo "$ECHO_PREFIX I need sudo access to install missing dependecies."
+    sudo apt-get install $missingdep -y
+fi
+wget --timeout=30 --quiet -O - http://github.com/api/v2/xml/repos/show/mono |  xmlstarlet sel -T -t -m '//repository' -v name -o "§" -v description -n | column -t -s '§' | cut -c 1-$(tput cols)
+exit
 ;;
 m) GIT_MODULES="$OPTARG"
 echo "$ECHO_PREFIX Building $GIT_MODULES"
@@ -63,29 +77,45 @@ else
     exit 1
 fi
 ;;
+d) MDVERSION=$OPTARG
+echo "$ECHO_PREFIX Building custom Monodevelop version $MDVERSION"
+;;
 h) 
-    echo "Usage: mono_build.sh [-v version] [-p prefix] [-m gitmodules] [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]";
+    echo "Usage: mono_build.sh [-v version] [-d mdversion]"
+    echo "                     [-p prefix] [-m gitmodules]"
+    echo "                     [-r] [-s] [-t] [-a] [-i] [-u] [-b] [-c]"
     echo
     echo "Command line options"
     echo
     echo "  -v   specify version of mono - master, 2.6, 2.8, 2.10"
     echo
-    echo "  -p   specify prefix to install"
+    echo "  -d   specify different version of monodevelop - master, 2.6, 2.8,"
+    echo "       2.9, or any other monodevelop branch."
+    echo "       If the specific version does not exist, the script will"
+    echo "       fallback to the default for the selected mono version."
     echo
-    echo "  -m   specify ONLY these git modules to build, choose from - libgdiplus llvm mono gtk-sharp xsp mod_mono mono-basic"
-    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp"
-    echo "       mono-tools debugger monodevelop"
+    echo "  -p   specify prefix to install (DEFAULT: $prefix)"
     echo
-    echo "  -r   Just build mono, builds modules: libgdiplus llvm mono gtk-sharp xsp mod_mono"
+    echo "  -m   specify ONLY these git modules to build. (see also -l)"
     echo
-    echo "  -s   Just build development modules, builds modules: mono-basic"
-    echo "       mono-addins gtkmozembed-sharp webkit-sharp gluezilla gnome-sharp gnome-desktop-sharp mono-tools debugger monodevelop"
+    echo "  -l   Fetch and display the list with all available modules"
+    echo "       from $GIT_BASE"
     echo
-    echo "  -t   Build all modules but llvm (takes long time to compile) not required for asp.net development"
+    echo "  -r   Just build mono, builds modules:"
+    echo "           libgdiplus llvm mono gtk-sharp xsp mod_mono"
     echo
-    echo "  -a   Build all modules"
+    echo "  -s   Just build development modules, builds modules:"
+    echo "           mono-basic mono-addins gtkmozembed-sharp webkit-sharp"
+    echo "           gluezilla gnome-sharp gnome-desktop-sharp mono-tools"
+    echo "           debugger monodevelop"
     echo
-    echo "  -i   Interactive mode, pause between each modules make and make install. Allows skipping of modules"
+    echo "  -a   Build mono and development modules (-s -r together)"
+    echo
+    echo "  -t   Build mono and development modules without llvm"
+    echo "       (only for asp.net development!)"
+    echo
+    echo "  -i   Interactive mode, pause between each modules make and"
+    echo "       make install. Allows skipping of modules"
     echo
     echo "  -u   Do not update source code, just build"
     echo
@@ -111,6 +141,21 @@ if [[ -z "$GIT_MODULES" ]]; then
     exit 1
 fi
 
+if [ $VERSION == "master" ]; then
+    DEFAULT_MDVERSION="master"
+elif [ $VERSION == "2.10" ]; then
+    DEFAULT_MDVERSION="2.8.6"
+elif [ $VERSION == "2.8" ]; then
+    DEFAULT_MDVERSION="2.4"
+elif [ $VERSION == "2.6" ]; then
+    DEFAULT_MDVERSION="2.4"
+fi
+
+if [[ -z "$MDVERSION" ]]; then
+    MDVERSION=$DEFAULT_MDVERSION
+    echo "$ECHO_PREFIX Building default Monodevelop version $MDVERSION"
+fi
+
 WORKING_DIR=~/mono-src
 
 #
@@ -120,6 +165,17 @@ WORKING_DIR=~/mono-src
 checkout_correct_version ()
 {
     # Configure version to use
+    if [ $mod == "monodevelop" ]; then
+        echo "$ECHO_PREFIX Configuring monodevelop for version $MDVERSION"
+        git checkout $MDVERSION
+        if [ $? -ne 0 ]; then
+            echo "$ECHO_PREFIX monodevelop version $MDVERSION not found! Falling back to default!"
+            MDVERSION=$DEFAULT_MDVERSION
+            git checkout $MDVERSION
+        fi
+        return
+    fi
+
     if [ $VERSION == "master" ]; then
         echo "$ECHO_PREFIX Configuring $mod for master"
         # gtk-sharp always requires 2.12 branch
@@ -143,8 +199,6 @@ checkout_correct_version ()
         elif [ $mod == "gnome-desktop-sharp" ]; then
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
-            git checkout master
-        elif [ $mod == "monodevelop" ]; then
             git checkout master
         elif [ $mod == "debugger" ]; then
             git checkout master
@@ -170,8 +224,6 @@ checkout_correct_version ()
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
             git checkout 0.5
-        elif [ $mod == "monodevelop" ]; then
-            git checkout 2.4
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-8
         elif [ $mod == "xsp" ]; then
@@ -195,8 +247,6 @@ checkout_correct_version ()
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
             git checkout 0.5
-        elif [ $mod == "monodevelop" ]; then
-            git checkout 2.4
         elif [ $mod == "debugger" ]; then
             git checkout mono-2-6
         elif [ $mod == "xsp" ]; then
@@ -210,7 +260,7 @@ checkout_correct_version ()
 
 echo "$ECHO_PREFIX Copyright 2009 (c) QMTech Ltd (http://www.qmtech.net)"
 echo "$ECHO_PREFIX Authors: Patrick McEvoy (firegrass) patrick@qmtech.net"
-echo "$ECHO_PREFIX Contributions from Dan Quirk,⋅Stefan Forster"
+echo "$ECHO_PREFIX Contributions from Dan Quirk,⋅Stefan Forster, Vsevolod Kukol"
 echo "$ECHO_PREFIX This is free script under GNU GPL version 3."
 
 MONO_PREFIX=$prefix/mono-$VERSION
@@ -223,14 +273,36 @@ sudo echo "$ECHO_PREFIX If the sudo time limit is reached you will need to enter
 echo "$ECHO_PREFIX Report bugs to patrick@qmtech.net, firegrass on twitter, carrier pidgeon etc"
 
 # install dependencies
-sudo apt-get install build-essential automake libtool gettext gawk intltool \
-libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
-bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
-libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
-libpanel-applet2-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev libgtkhtml3.14-dev libgtksourceview2.0-dev libnautilus-burn-dev librsvg2-dev libvte-dev libwncksync-dev \
-libnspr4-dev libnss3-dev libwebkit-dev xulrunner-dev \
-apache2-threaded-dev \
--y
+
+. /etc/lsb-release
+
+UBUNTU_VERSION=$(echo $DISTRIB_RELEASE |tr -d '.')
+
+if [ $UBUNTU_VERSION -le 1104 ]; then
+
+	sudo apt-get install build-essential automake libtool gettext gawk intltool \
+	libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
+	bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
+	libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
+	libpanel-applet2-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev libgtkhtml3.14-dev \
+	libgtksourceview2.0-dev libnautilus-burn-dev librsvg2-dev libvte-dev libwncksync-dev \
+	libnspr4-dev libnss3-dev libwebkit-dev xulrunner-dev \
+	apache2-threaded-dev \
+	-y
+
+else
+
+	sudo apt-get install build-essential automake libtool gettext gawk intltool \
+	libpng-dev libtiff-dev libgif-dev libjpeg-dev libexif-dev autoconf automake \
+	bison flex libcairo2-dev libpango1.0-dev git-core libatk1.0-dev libgtk2.0-dev \
+	libglade2-dev libgnomecanvas2-dev libgnome2-dev libgnomeui-dev \
+	libgnome-desktop-dev libgnome-desktop-3-dev libgnomeprint2.2-dev libgnomeprintui2.2-dev \
+	libgtkhtml3.14-dev libgtksourceview2.0-dev librsvg2-dev libvte-dev \
+	libnspr4-dev libnss3-dev libwebkit-dev \
+	apache2-threaded-dev \
+	-y
+
+fi
 
 # you really shouldn’t be doing this as root, you know…
 if [ "$(id -u)" = "0" ]; then
@@ -243,9 +315,6 @@ sudo echo "$ECHO_PREFIX If the sudo time limit is reached you will need to enter
 # making a dir to work from
 mkdir -p $WORKING_DIR
 cd $WORKING_DIR
-
-# git path for mono sources
-GIT_BASE=http://github.com/mono
 
 if [ "$skipupdate" ]; then
     echo "$ECHO_PREFIX Skipping source update"
@@ -309,6 +378,7 @@ GNOME_PREFIX=/usr
 export DYLD_LIBRARY_FALLBACK_PATH=$MONO_PREFIX/lib:$DYLD_LIBRARY_FALLBACK_PATH
 export LD_LIBRARY_PATH=$MONO_PREFIX/lib:$LD_LIBRARY_PATH
 export C_INCLUDE_PATH=$MONO_PREFIX/include:$GNOME_PREFIX/include
+export MONO_GAC_PREFIX=$MONO_PREFIX:$MONO_GAC_PREFIX
 export ACLOCAL_PATH=$MONO_PREFIX/share/aclocal
 export PKG_CONFIG_PATH=$MONO_PREFIX/lib/pkgconfig:$GNOME_PREFIX/lib/pkgconfig
 export PATH=$MONO_PREFIX/bin:$PATH
@@ -322,6 +392,7 @@ GNOME_PREFIX=/usr
 export DYLD_LIBRARY_FALLBACK_PATH=$MONO_PREFIX/lib:$DYLD_LIBRARY_FALLBACK_PATH
 export LD_LIBRARY_PATH=$MONO_PREFIX/lib:$LD_LIBRARY_PATH
 export C_INCLUDE_PATH=$MONO_PREFIX/include:$GNOME_PREFIX/include
+export MONO_GAC_PREFIX=$MONO_PREFIX:$MONO_GAC_PREFIX
 export ACLOCAL_PATH=$MONO_PREFIX/share/aclocal
 export PKG_CONFIG_PATH=$MONO_PREFIX/lib/pkgconfig:$GNOME_PREFIX/lib/pkgconfig
 export PATH=$MONO_PREFIX/bin:$PATH
@@ -371,7 +442,13 @@ else
 	    elif [[ $mod == "mono" && $GIT_MODULES == "*llvm*" ]]; then
 	        ./autogen.sh --prefix=$MONO_PREFIX --enable-llvm
     	else
-            ./autogen.sh --prefix=$MONO_PREFIX
+            if [ -f ./autogen.sh ]; then
+                ./autogen.sh --prefix=$MONO_PREFIX
+            elif [ -f ./configure ]; then
+                ./configure --prefix=$MONO_PREFIX
+            else
+                read -p "$ECHO_PREFIX ERROR: $mod configuration script not found, press enter to continue" inpVar; cd ..; continue;
+            fi
         fi
 
         make || { read -p "$ECHO_PREFIX ERROR: $mod failed to compile, press enter to continue" inpVar; cd ..; continue; }
@@ -389,10 +466,22 @@ else
         
         sudo make install || { read -p "$ECHO_PREFIX ERROR: $mod failed, press enter to continue" inpVar; cd ..; continue; }
         
+        if [ $mod == "monodevelop" ]; then
+            sudo cp $MONO_PREFIX/share/applications/monodevelop.desktop /usr/share/applications/monodevelop-$MDVERSION.desktop
+            sudo sed -e "s#^Exec=monodevelop#Exec=mono-$VERSION monodevelop#g" \
+                     -e "s#^TryExec=MonoDevelop#TryExec=mono-$VERSION#g" \
+                     -e "s#^Name=MonoDevelop#Name=MonoDevelop $MDVERSION#g" \
+                     -i /usr/share/applications/monodevelop-$MDVERSION.desktop
+        fi
         cd ..
         
     done
 
+    if [ ! -z "$(which monodoc)" ]; then
+        echo "$ECHO_PREFIX Generating monodoc search index..."
+        monodoc --make-index > /dev/null
+        monodoc --make-search-index > /dev/null
+    fi
 fi
 
 # Exit message
