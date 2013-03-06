@@ -2,6 +2,6 @@ Helper scripts to get an up-to-date mono environment installed on Ubuntu without
 
 Run 
 
-./mono-build.sh -h
+./mono_build.sh -h
 
 to see options and examples
