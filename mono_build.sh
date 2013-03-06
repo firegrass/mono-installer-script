@@ -199,7 +199,7 @@ checkout_correct_version ()
         elif [ $mod == "gnome-desktop-sharp" ]; then
             git checkout gnome-desktop-sharp-2-24-branch
         elif [ $mod == "mono-addins" ]; then
-            git checkout master
+            git checkout 0.6.2
         elif [ $mod == "debugger" ]; then
             git checkout master
         elif [ $mod == "xsp" ]; then
@@ -349,6 +349,7 @@ else
                 git checkout --track -b gnome-desktop-sharp-2-24-branch origin/gnome-desktop-sharp-2-24-branch
             elif [ $mod == "mono-addins" ]; then
                 git checkout --track -b 0.5 origin/0.5
+                git checkout --track -b 0.6.2 origin/0.6.2
             elif [ $mod == "monodevelop" ]; then
                 git checkout --track -b 2.4 origin/2.4
             elif [ $mod == "debugger" ]; then
