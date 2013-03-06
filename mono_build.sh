@@ -273,7 +273,7 @@ else
             if [ $mod == "mono" ]; then
                 git checkout --track -b mono-2-8 origin/mono-2-8
                 git checkout --track -b mono-2-6 origin/mono-2-6
-                git checkout --track -b mono-2-6 origin/mono-2-10
+                git checkout --track -b mono-2-10 origin/mono-2-10
             elif [ $mod == "gtk-sharp" ]; then
                 git checkout --track origin/gtk-sharp-2-12-branch
             elif [ $mod == "gnome-desktop-sharp" ]; then
